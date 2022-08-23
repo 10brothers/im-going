@@ -1,3 +1,7 @@
+# 声明
+修改自[GitHub](https://github.com/Terry-Ye/im)，调整为使用mod做包管理工具，相关包做了版本升级，
+去除了对zookeeper的使用，全部做单机部署，RPC调用使用直连的方式。
+
 ### 简介
 纯go实现的im即时通讯系统，各层可单独部署，之间通过rpc通讯，支持集群，学习于goim, 另使用于zookeeper,扩展性会大大增强, 总分三层
 1. comet（用户连接层），可以直接部署多个节点，每个节点保证serverId 唯一，在配置文件comet.toml
