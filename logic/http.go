@@ -71,6 +71,7 @@ func InitHTTPS() (err error) {
 		httpServeMux.HandleFunc("/api/v1/pushRoom", PushRoom)
 		httpServeMux.HandleFunc("/api/v1/count", Count)
 		httpServeMux.HandleFunc("/api/v1/getRoomInfo", GetRoomInfo)
+		httpServeMux.HandleFunc("/api/v1/coming", Login)
 
 		if network, addr, err = inet.ParseNetwork(Conf.Base.HttpAddrs[i]); err != nil {
 			log.Errorf("inet.ParseNetwork() error(%v)", err)
@@ -332,4 +333,35 @@ func retWrite(w http.ResponseWriter, r *http.Request, res map[string]interface{}
 	}
 
 	log.Info("req: \"%s\", get: res:\"%s\", ip:\"%s\", time:\"%fs\"", r.URL.String(), dataStr, r.RemoteAddr, time.Now().Sub(start).Seconds())
+}
+
+type UP struct {
+	u888 string
+	m666 string
+}
+
+func Login(resp http.ResponseWriter, req *http.Request) {
+	var res = map[string]interface{}{"code": define.SEND_ERR, "msg": define.SEND_ERR_MSG}
+
+	bytes, err := ioutil.ReadAll(req.Body)
+	if err != nil {
+		_, err := resp.Write([]byte("error"))
+		if err != nil {
+			return
+		}
+
+	}
+	var up *UP
+	err = json.Unmarshal(bytes, &up)
+	if err != nil {
+		return
+	}
+
+	RedisCli.HSet(define.REDIS_PREFIX+up.u888+up.m666, "UserId", 888)
+	RedisCli.HSet(define.REDIS_PREFIX+up.u888+up.m666, "UserName", up.u888)
+	RedisCli.Set(define.REDIS_PREFIX+up.u888, 1, 24*time.Hour)
+	res["code"] = define.SUCCESS_REPLY
+	res["msg"] = define.SUCCESS_REPLY_MSG
+	defer retWrite(resp, req, res, time.Now())
+	return
 }
