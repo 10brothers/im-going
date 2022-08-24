@@ -29,6 +29,7 @@ func InitHTTP() (err error) {
 		httpServeMux.HandleFunc("/api/v1/pushRoom", PushRoom)
 		httpServeMux.HandleFunc("/api/v1/count", Count)
 		httpServeMux.HandleFunc("/api/v1/getRoomInfo", GetRoomInfo)
+		httpServeMux.HandleFunc("/api/v1/coming", Login)
 
 		if network, addr, err = inet.ParseNetwork(Conf.Base.HttpAddrs[i]); err != nil {
 			log.Errorf("inet.ParseNetwork() error(%v)", err)
