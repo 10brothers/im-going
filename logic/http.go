@@ -337,39 +337,42 @@ func retWrite(w http.ResponseWriter, r *http.Request, res map[string]interface{}
 }
 
 type UP struct {
-	u888 string
-	m666 string
+	U888 string `json:"u888"` // 如果除了首字母大小写差异外，可以不用显示的映射json字段
+	M666 string `json:"m666"`
 }
 
 func Login(resp http.ResponseWriter, req *http.Request) {
 	var res = map[string]interface{}{"code": define.SEND_ERR, "msg": define.SEND_ERR_MSG}
 
 	defer retWrite(resp, req, res, time.Now())
-	bytes, err := ioutil.ReadAll(req.Body)
-	if err != nil {
-		_, err := resp.Write([]byte("error"))
-		if err != nil {
-			return
-		}
+	var (
+		bodyBytes []byte
+		err       error
+	)
+	if bodyBytes, err = ioutil.ReadAll(req.Body); err != nil {
+		res["msg"] = "Error"
 		return
 	}
+	log.Infof("PushRoom get bodyBytes : %s", bodyBytes)
 	var up *UP
-	err = json.Unmarshal(bytes, &up)
-	if err != nil {
+	errJson := json.Unmarshal(bodyBytes, &up)
+	if errJson != nil { // nil表示zero value 并不是错误的意思 也不表示null
 		res["msg"] = "反序列化异常"
 		return
 	}
 
 	//
-	val := RedisCli.Get(define.REDIS_ACCOUNT_PREFIX + up.u888 + up.m666).Val()
+	var key = define.REDIS_ACCOUNT_PREFIX + up.U888 + up.M666
+	val := RedisCli.Get(key).Val()
+	log.Infof("key %s 的值 %s", key, val)
 	if val == "" {
 		res["msg"] = "滚滚滚!!!"
 		return
 	}
 
-	RedisCli.HSet(define.REDIS_PREFIX+up.u888+up.m666, "UserId", up.u888)
-	RedisCli.HSet(define.REDIS_PREFIX+up.u888+up.m666, "UserName", "anonymous|"+up.u888)
-	RedisCli.Set(define.REDIS_PREFIX+up.u888, 1, 24*time.Hour)
+	RedisCli.HSet(define.REDIS_PREFIX+val, "UserId", up.U888)
+	RedisCli.HSet(define.REDIS_PREFIX+val, "UserName", "anonymous|"+up.U888)
+	RedisCli.Set(define.REDIS_PREFIX+up.U888, 1, 24*time.Hour)
 	res["code"] = define.SUCCESS_REPLY
 	res["msg"] = val
 	return
