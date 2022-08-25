@@ -344,25 +344,33 @@ type UP struct {
 func Login(resp http.ResponseWriter, req *http.Request) {
 	var res = map[string]interface{}{"code": define.SEND_ERR, "msg": define.SEND_ERR_MSG}
 
+	defer retWrite(resp, req, res, time.Now())
 	bytes, err := ioutil.ReadAll(req.Body)
 	if err != nil {
 		_, err := resp.Write([]byte("error"))
 		if err != nil {
 			return
 		}
-
+		return
 	}
 	var up *UP
 	err = json.Unmarshal(bytes, &up)
 	if err != nil {
+		res["msg"] = "反序列化异常"
 		return
 	}
 
-	RedisCli.HSet(define.REDIS_PREFIX+up.u888+up.m666, "UserId", 888)
-	RedisCli.HSet(define.REDIS_PREFIX+up.u888+up.m666, "UserName", up.u888)
+	//
+	val := RedisCli.Get(define.REDIS_ACCOUNT_PREFIX + up.u888 + up.m666).Val()
+	if val == "" {
+		res["msg"] = "滚滚滚!!!"
+		return
+	}
+
+	RedisCli.HSet(define.REDIS_PREFIX+up.u888+up.m666, "UserId", up.u888)
+	RedisCli.HSet(define.REDIS_PREFIX+up.u888+up.m666, "UserName", "anonymous|"+up.u888)
 	RedisCli.Set(define.REDIS_PREFIX+up.u888, 1, 24*time.Hour)
 	res["code"] = define.SUCCESS_REPLY
-	res["msg"] = define.SUCCESS_REPLY_MSG
-	defer retWrite(resp, req, res, time.Now())
+	res["msg"] = val
 	return
 }
