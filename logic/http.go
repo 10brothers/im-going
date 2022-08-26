@@ -379,6 +379,11 @@ func Login(resp http.ResponseWriter, req *http.Request) {
 	return
 }
 
+type Friend struct {
+	UserId   string
+	NickName string
+}
+
 func GetFriends(w http.ResponseWriter, r *http.Request) {
 	var res = map[string]interface{}{"code": define.SEND_ERR, "msg": define.SEND_ERR_MSG}
 
@@ -386,6 +391,7 @@ func GetFriends(w http.ResponseWriter, r *http.Request) {
 	var (
 		token  = r.URL.Query().Get("auth")
 		userId = r.URL.Query().Get("userId")
+		list   []Friend
 	)
 
 	storeUid := RedisCli.HGet(define.REDIS_PREFIX+token, "UserId").Val()
@@ -394,7 +400,14 @@ func GetFriends(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	friends := RedisCli.HGetAll(define.REDIS_FRIENDS + userId).Val()
-	res["friend"] = friends
+	for userId, name := range friends {
+		f := new(Friend)
+		f.UserId = userId
+		f.NickName = name
+		list = append(list, *f)
+	}
+	res["friend"] = list
 	res["code"] = 0
+	res["msg"] = "success"
 	return
 }
