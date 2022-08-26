@@ -7,4 +7,5 @@ const (
 	REDIS_SUB              = "go_im_sub"
 	REDIS_BASE_VALID_TIME  = 86400
 	REDIS_ACCOUNT_PREFIX   = "im_account_"
+	REDIS_FRIENDS          = "im_friends_"
 )

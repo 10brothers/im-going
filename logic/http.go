@@ -30,6 +30,7 @@ func InitHTTP() (err error) {
 		httpServeMux.HandleFunc("/api/v1/count", Count)
 		httpServeMux.HandleFunc("/api/v1/getRoomInfo", GetRoomInfo)
 		httpServeMux.HandleFunc("/api/v1/coming", Login)
+		httpServeMux.HandleFunc("/api/v1/friends", GetFriends)
 
 		if network, addr, err = inet.ParseNetwork(Conf.Base.HttpAddrs[i]); err != nil {
 			log.Errorf("inet.ParseNetwork() error(%v)", err)
@@ -375,5 +376,25 @@ func Login(resp http.ResponseWriter, req *http.Request) {
 	RedisCli.Set(define.REDIS_PREFIX+up.U888, 1, 24*time.Hour)
 	res["code"] = define.SUCCESS_REPLY
 	res["msg"] = val
+	return
+}
+
+func GetFriends(w http.ResponseWriter, r *http.Request) {
+	var res = map[string]interface{}{"code": define.SEND_ERR, "msg": define.SEND_ERR_MSG}
+
+	defer retWrite(w, r, res, time.Now())
+	var (
+		token  = r.URL.Query().Get("auth")
+		userId = r.URL.Query().Get("userId")
+	)
+
+	storeUid := RedisCli.HGet(define.REDIS_PREFIX+token, "UserId").Val()
+	if userId != storeUid {
+		res["msg"] = "Auth Error"
+		return
+	}
+	friends := RedisCli.HGetAll(define.REDIS_FRIENDS + userId).Val()
+	res["friend"] = friends
+	res["code"] = 0
 	return
 }
